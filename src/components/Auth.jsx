@@ -7,31 +7,40 @@ export default function Auth() {
 
   async function signUp() {
     const { error } = await supabase.auth.signUp({
-      email,
-      password
+      email: email,
+      password: password
     });
 
-    if (error) alert(error.message);
-    else alert("Account created!");
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Account created successfully!");
+    }
   }
 
   return (
-    <div>
+    <div style={{marginTop:"30px"}}>
       <h2>Create Account</h2>
 
       <input
         type="email"
         placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e)=>setEmail(e.target.value)}
       />
+
+      <br/><br/>
 
       <input
         type="password"
         placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={(e)=>setPassword(e.target.value)}
       />
 
-      <button onClick={signUp}>Sign Up</button>
+      <br/><br/>
+
+      <button onClick={signUp}>
+        Sign Up
+      </button>
     </div>
   );
 }
