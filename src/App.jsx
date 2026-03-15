@@ -1,5 +1,6 @@
 import Auth from "./components/Auth";
 import PostJob from "./components/PostJob";
+import JobList from "./components/JobList";
 
 export default function App() {
   return (
@@ -9,9 +10,13 @@ export default function App() {
 
       <Auth />
 
-      <hr style={{margin:"40px 0"}}/>
+      <hr />
 
       <PostJob />
+
+      <hr />
+
+      <JobList />
     </div>
   );
 }
