@@ -1,38 +1,12 @@
 import Auth from "./components/Auth";
-import { useState } from "react";
-import { supabase } from "../supabaseClient";
 
-export default function Auth() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  async function signUp() {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password
-    });
-
-    if (error) alert(error.message);
-    else alert("Account created!");
-  }
-
+export default function App() {
   return (
-    <div>
-      <h2>Create Account</h2>
+    <div style={{padding:"40px",fontFamily:"Arial"}}>
+      <h1>Kedamawi Marketplace</h1>
+      <p>Hire & work smarter in Ethiopia</p>
 
-      <input
-        type="email"
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      <button onClick={signUp}>Sign Up</button>
+      <Auth />
     </div>
   );
 }
