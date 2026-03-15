@@ -2,6 +2,7 @@ import Auth from "./components/Auth";
 import PostJob from "./components/PostJob";
 import JobList from "./components/JobList";
 import ClientDashboard from "./components/ClientDashboard";
+import Profile from "./components/Profile";
 
 export default function App() {
   return (
