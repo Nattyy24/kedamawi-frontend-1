@@ -1,5 +1,5 @@
 import Auth from "./components/Auth";
-
+import PostJob from "./components/PostJob";
 export default function App() {
   return (
     <div style={{padding:"40px",fontFamily:"Arial"}}>
