@@ -1,5 +1,5 @@
-import PostJob from "./components/PostJob";
 import Auth from "./components/Auth";
+import PostJob from "./components/PostJob";
 
 export default function App() {
   return (
