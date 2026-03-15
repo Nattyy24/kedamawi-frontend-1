@@ -7,13 +7,9 @@ export default function PostJob() {
   const [budget, setBudget] = useState("");
 
   async function createJob() {
-    const { error } = await supabase.from("jobs").insert([
-      {
-        title: title,
-        description: description,
-        budget: budget
-      }
-    ]);
+    const { error } = await supabase
+      .from("jobs")
+      .insert([{ title, description, budget }]);
 
     if (error) {
       alert(error.message);
@@ -23,33 +19,31 @@ export default function PostJob() {
   }
 
   return (
-    <div style={{marginTop:"40px"}}>
+    <div style={{ marginTop: "40px" }}>
       <h2>Post a Job</h2>
 
       <input
-        placeholder="Job title"
-        onChange={(e)=>setTitle(e.target.value)}
+        placeholder="Job Title"
+        onChange={(e) => setTitle(e.target.value)}
       />
 
-      <br/><br/>
+      <br /><br />
 
       <textarea
-        placeholder="Job description"
-        onChange={(e)=>setDescription(e.target.value)}
+        placeholder="Job Description"
+        onChange={(e) => setDescription(e.target.value)}
       />
 
-      <br/><br/>
+      <br /><br />
 
       <input
         placeholder="Budget"
-        onChange={(e)=>setBudget(e.target.value)}
+        onChange={(e) => setBudget(e.target.value)}
       />
 
-      <br/><br/>
+      <br /><br />
 
-      <button onClick={createJob}>
-        Post Job
-      </button>
+      <button onClick={createJob}>Post Job</button>
     </div>
   );
 }
