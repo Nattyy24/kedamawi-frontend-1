@@ -1,134 +1,189 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 
 export default function Wallet() {
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch wallet and transactions
   useEffect(() => {
-    const fetchWallet = async () => {
-      setLoading(true);
-
-      // 1️⃣ Get current user
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // 2️⃣ Fetch wallet
-        const { data: walletData, error: walletError } = await supabase
-          .from("wallets")
-          .select("*")
-          .eq("user_id", userId)
-          .single();
-
-        if (walletError) throw walletError;
-        setBalance(walletData.balance);
-
-        // 3️⃣ Fetch transactions
-        const { data: txData, error: txError } = await supabase
-          .from("transactions")
-          .select("*")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false });
-
-        if (txError) throw txError;
-        setTransactions(txData);
-      } catch (error) {
-        alert("Error fetching wallet: " + error.message);
-      }
-
-      setLoading(false);
-    };
-
     fetchWallet();
+    fetchTransactions();
   }, []);
 
-  // Simulated deposit (for testing)
-  const handleDeposit = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
+  async function fetchWallet() {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
 
-    if (!userId) return;
+    if (!session) return;
 
-    try {
-      // Update wallet balance (+100 for demo)
-      const { data: walletData, error: walletError } = await supabase
+    const { data } = await supabase
+      .from("wallets")
+      .select("balance")
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (data) setBalance(data.balance || 0);
+  }
+
+  async function fetchTransactions() {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    if (!session) return;
+
+    const { data } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .order("created_at", { ascending: false });
+
+    setTransactions(data || []);
+  }
+
+  // 💰 Simulate payment
+  async function simulatePayment() {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      alert("You are not logged in");
+      return;
+    }
+
+    const userId = session.user.id;
+
+    const amount = 100;
+    const fee = amount * 0.1;
+    const net = amount - fee;
+
+    let { data: wallet } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (!wallet) {
+      const { data: newWallet } = await supabase
         .from("wallets")
-        .update({ balance: balance + 100 })
-        .eq("user_id", userId)
+        .insert({ user_id: userId, balance: 0 })
+        .select()
         .single();
 
-      if (walletError) throw walletError;
-      setBalance(walletData.balance);
-
-      // Insert transaction
-      await supabase.from("transactions").insert([
-        {
-          user_id: userId,
-          type: "deposit",
-          amount: 100,
-          description: "Test deposit +$100",
-        },
-      ]);
-
-      alert("Deposit successful!");
-    } catch (error) {
-      alert("Error updating wallet: " + error.message);
+      wallet = newWallet;
     }
-  };
 
-  if (loading) return <p>Loading wallet...</p>;
+    const newBalance = (wallet.balance || 0) + net;
+
+    await supabase
+      .from("wallets")
+      .update({ balance: newBalance })
+      .eq("user_id", userId);
+
+    await supabase.from("transactions").insert({
+      user_id: userId,
+      amount: net,
+      type: "credit",
+      description: "Job payment (after 10% fee)"
+    });
+
+    fetchWallet();
+    fetchTransactions();
+  }
+
+  // 💸 Withdraw
+  async function withdrawMoney() {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      alert("You are not logged in");
+      return;
+    }
+
+    const userId = session.user.id;
+    const withdrawAmount = 50;
+
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (!wallet) {
+      alert("Wallet not found");
+      return;
+    }
+
+    if (wallet.balance < withdrawAmount) {
+      alert("Insufficient balance");
+      return;
+    }
+
+    const newBalance = wallet.balance - withdrawAmount;
+
+    await supabase
+      .from("wallets")
+      .update({ balance: newBalance })
+      .eq("user_id", userId);
+
+    await supabase.from("transactions").insert({
+      user_id: userId,
+      amount: withdrawAmount,
+      type: "debit",
+      description: "Withdrawal"
+    });
+
+    fetchWallet();
+    fetchTransactions();
+  }
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h2>Wallet 💰</h2>
-      <p>Current Balance: ${balance}</p>
+    <div className="p-6 max-w-3xl mx-auto">
+      <h2 className="text-xl font-bold mb-4">Wallet 💰</h2>
 
-      {/* Simulated deposit for testing */}
-      <button onClick={handleDeposit} style={{ marginBottom: "20px" }}>
-        Simulate Deposit +$100
-      </button>
+      {/* Buttons */}
+      <div className="mb-4">
+        <button
+          onClick={simulatePayment}
+          className="bg-green-600 text-white px-4 py-2 mr-2"
+        >
+          Simulate $100 Payment
+        </button>
 
-      <h3>Transactions</h3>
-      {transactions.length === 0 ? (
-        <p>No transactions yet.</p>
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Date</th>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Type</th>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Amount</th>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((tx) => (
-              <tr key={tx.id}>
-                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                  {new Date(tx.created_at).toLocaleString()}
-                </td>
-                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                  {tx.type}
-                </td>
-                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                  ${tx.amount}
-                </td>
-                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                  {tx.description}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        <button
+          onClick={withdrawMoney}
+          className="bg-red-600 text-white px-4 py-2"
+        >
+          Withdraw $50
+        </button>
+      </div>
+
+      {/* Balance */}
+      <div className="bg-white shadow p-4 rounded mb-6">
+        <h3>Balance</h3>
+        <p className="text-2xl font-bold">${balance}</p>
+      </div>
+
+      {/* Transactions */}
+      <div className="bg-white shadow p-4 rounded">
+        <h3 className="mb-3 font-bold">Transactions</h3>
+
+        {transactions.length === 0 ? (
+          <p>No transactions yet</p>
+        ) : (
+          transactions.map((t) => (
+            <div key={t.id} className="border-b py-2">
+              <p>{t.description}</p>
+              <p>${t.amount}</p>
+              <p>{t.type}</p>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
