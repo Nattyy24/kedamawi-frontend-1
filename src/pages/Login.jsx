@@ -1,40 +1,50 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  async function handleLogin(e) {
     e.preventDefault();
-    setLoading(true);
 
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     if (error) {
-      alert("Login failed: " + error.message);
+      alert(error.message);
     } else {
-      alert("Check your email for the login link!");
+      navigate("/freelancer-profile");
     }
-
-    setLoading(false);
-  };
+  }
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h2>Login 🚀</h2>
-      <form onSubmit={handleLogin}>
+    <div className="p-6 max-w-md mx-auto">
+      <h2 className="text-gold text-xl mb-4">Login</h2>
+
+      <form onSubmit={handleLogin} className="space-y-3">
         <input
           type="email"
-          placeholder="Enter your email"
+          placeholder="Email"
+          className="w-full p-2 text-black"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ padding: "8px", margin: "5px 0", width: "300px" }}
         />
-        <br />
-        <button type="submit" disabled={loading} style={{ padding: "10px 20px", marginTop: "10px" }}>
-          {loading ? "Sending link..." : "Send Login Link"}
+
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full p-2 text-black"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button className="btn-gold w-full">
+          Login
         </button>
       </form>
     </div>

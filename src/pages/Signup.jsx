@@ -1,85 +1,45 @@
-import { useState } from "react";
-import { supabase } from "../supabaseClient";
-import { useNavigate } from "react-router-dom";
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link
+} from "react-router-dom";
 
-export default function Signup() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("freelancer");
-  const [loading, setLoading] = useState(false);
+import FreelancerProfile from "./pages/FreelancerProfile";
+import EditProfile from "./pages/EditProfile";
+import Wallet from "./pages/Wallet";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
-  const navigate = useNavigate();
-
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // 1️⃣ Sign up user with Supabase
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) throw error;
-
-      // 2️⃣ Create profile in "profiles" table
-      const { error: profileError } = await supabase.from("profiles").insert([
-        { id: data.user.id, email: data.user.email, role },
-      ]);
-      if (profileError) throw profileError;
-
-      // 3️⃣ Auto-create wallet for freelancers
-      if (role === "freelancer") {
-        const { error: walletError } = await supabase.from("wallets").insert([
-          { user_id: data.user.id, balance: 0 },
-        ]);
-        if (walletError) throw walletError;
-      }
-
-      alert("Signup successful! Check your email to login.");
-      navigate("/login");
-    } catch (err) {
-      alert("Signup failed: " + err.message);
-    }
-
-    setLoading(false);
-  };
-
+export default function App() {
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h2>Sign Up 🚀</h2>
-      <form onSubmit={handleSignup}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ padding: "8px", margin: "5px 0", width: "300px" }}
-        />
-        <br />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ padding: "8px", margin: "5px 0", width: "300px" }}
-        />
-        <br />
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          style={{ padding: "8px", margin: "5px 0", width: "320px" }}
-        >
-          <option value="freelancer">Freelancer</option>
-          <option value="client">Client</option>
-        </select>
-        <br />
-        <button type="submit" disabled={loading} style={{ padding: "10px 20px", marginTop: "10px" }}>
-          {loading ? "Signing up..." : "Sign Up"}
-        </button>
-      </form>
-    </div>
+    <Router>
+      <div className="p-6">
+
+        <h1 className="text-3xl text-gold mb-6">
+          Kedamawi 🚀
+        </h1>
+
+        {/* 🔥 NAVBAR */}
+        <nav className="mb-6 space-x-3">
+         <Link to="/">Home</Link>
+         <Link to="/freelancer-profile">Profile</Link>
+         <Link to="/edit-profile">Edit Profile</Link>
+         <Link to="/wallet">Wallet</Link>
+         <Link to="/login">Login</Link>
+         <Link to="/signup">Signup</Link>
+        </nav>
+
+        <Routes>
+          <Route path="/" element={<p>Welcome 👋</p>} />
+          <Route path="/freelancer-profile" element={<FreelancerProfile />} />
+          <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }

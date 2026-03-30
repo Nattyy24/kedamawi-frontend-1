@@ -1,4 +1,3 @@
-/** @type {import('tailwindcss').Config} */
 export default {
   content: [
     "./index.html",
@@ -8,8 +7,9 @@ export default {
     extend: {
       colors: {
         primary: "#121212",
-        secondary: "#1e1e1e",
-        gold: "#D4AF37"
+        gold: "#D4AF37",
+        goldSoft: "#BF953F",
+        goldLight: "#FCF6BA",
       }
     },
   },

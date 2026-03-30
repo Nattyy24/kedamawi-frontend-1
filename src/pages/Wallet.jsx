@@ -6,58 +6,13 @@ export default function Wallet() {
   const [transactions, setTransactions] = useState([]);
 
   useEffect(() => {
-    fetchWallet();
-    fetchTransactions();
+    load();
   }, []);
 
-  async function fetchWallet() {
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
-
-    if (!session) return;
-
-    const { data } = await supabase
-      .from("wallets")
-      .select("balance")
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (data) setBalance(data.balance || 0);
-  }
-
-  async function fetchTransactions() {
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
-
-    if (!session) return;
-
-    const { data } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_id", session.user.id)
-      .order("created_at", { ascending: false });
-
-    setTransactions(data || []);
-  }
-
-  // 💰 Simulate payment
-  async function simulatePayment() {
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      alert("You are not logged in");
-      return;
-    }
-
-    const userId = session.user.id;
-
-    const amount = 100;
-    const fee = amount * 0.1;
-    const net = amount - fee;
+  async function load() {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return;
 
     let { data: wallet } = await supabase
       .from("wallets")
@@ -66,46 +21,27 @@ export default function Wallet() {
       .single();
 
     if (!wallet) {
-      const { data: newWallet } = await supabase
-        .from("wallets")
-        .insert({ user_id: userId, balance: 0 })
-        .select()
-        .single();
-
-      wallet = newWallet;
+      await supabase.from("wallets").insert({ user_id: userId, balance: 0 });
+      wallet = { balance: 0 };
     }
 
-    const newBalance = (wallet.balance || 0) + net;
+    setBalance(wallet.balance);
 
-    await supabase
-      .from("wallets")
-      .update({ balance: newBalance })
-      .eq("user_id", userId);
+    const { data } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-    await supabase.from("transactions").insert({
-      user_id: userId,
-      amount: net,
-      type: "credit",
-      description: "Job payment (after 10% fee)"
-    });
-
-    fetchWallet();
-    fetchTransactions();
+    setTransactions(data || []);
   }
 
-  // 💸 Withdraw
-  async function withdrawMoney() {
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
+  async function simulatePayment() {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user.id;
 
-    if (!session) {
-      alert("You are not logged in");
-      return;
-    }
-
-    const userId = session.user.id;
-    const withdrawAmount = 50;
+    const amount = 100;
+    const net = amount * 0.9;
 
     const { data: wallet } = await supabase
       .from("wallets")
@@ -113,77 +49,61 @@ export default function Wallet() {
       .eq("user_id", userId)
       .single();
 
-    if (!wallet) {
-      alert("Wallet not found");
-      return;
-    }
+    const newBalance = (wallet?.balance || 0) + net;
 
-    if (wallet.balance < withdrawAmount) {
-      alert("Insufficient balance");
-      return;
-    }
-
-    const newBalance = wallet.balance - withdrawAmount;
-
-    await supabase
-      .from("wallets")
-      .update({ balance: newBalance })
-      .eq("user_id", userId);
+    await supabase.from("wallets").update({ balance: newBalance }).eq("user_id", userId);
 
     await supabase.from("transactions").insert({
       user_id: userId,
-      amount: withdrawAmount,
+      amount: net,
+      type: "credit",
+      description: "Payment received"
+    });
+
+    load();
+  }
+
+  async function withdraw() {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user.id;
+
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (wallet.balance < 50) {
+      alert("Minimum $50 required");
+      return;
+    }
+
+    await supabase.from("wallets").update({ balance: wallet.balance - 50 }).eq("user_id", userId);
+
+    await supabase.from("transactions").insert({
+      user_id: userId,
+      amount: 50,
       type: "debit",
       description: "Withdrawal"
     });
 
-    fetchWallet();
-    fetchTransactions();
+    load();
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">Wallet 💰</h2>
+    <div>
+      <h2>Wallet 💰</h2>
 
-      {/* Buttons */}
-      <div className="mb-4">
-        <button
-          onClick={simulatePayment}
-          className="bg-green-600 text-white px-4 py-2 mr-2"
-        >
-          Simulate $100 Payment
-        </button>
+      <p>Balance: ${balance}</p>
 
-        <button
-          onClick={withdrawMoney}
-          className="bg-red-600 text-white px-4 py-2"
-        >
-          Withdraw $50
-        </button>
-      </div>
+      <button onClick={simulatePayment}>Simulate Payment</button>
+      <button onClick={withdraw}>Withdraw $50</button>
 
-      {/* Balance */}
-      <div className="bg-white shadow p-4 rounded mb-6">
-        <h3>Balance</h3>
-        <p className="text-2xl font-bold">${balance}</p>
-      </div>
-
-      {/* Transactions */}
-      <div className="bg-white shadow p-4 rounded">
-        <h3 className="mb-3 font-bold">Transactions</h3>
-
-        {transactions.length === 0 ? (
-          <p>No transactions yet</p>
-        ) : (
-          transactions.map((t) => (
-            <div key={t.id} className="border-b py-2">
-              <p>{t.description}</p>
-              <p>${t.amount}</p>
-              <p>{t.type}</p>
-            </div>
-          ))
-        )}
-      </div>
+      {transactions.map(t => (
+        <div key={t.id}>
+          {t.description} - ${t.amount}
+        </div>
+      ))}
     </div>
   );
 }

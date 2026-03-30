@@ -2,7 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Smooth font rendering */
+/* Global Dark Theme */
 body {
-  font-family: sans-serif;
+  @apply bg-primary text-white;
+}
+
+/* 🔥 Gold Button */
+.btn-gold {
+  background: linear-gradient(45deg, #BF953F, #FCF6BA, #B38728);
+  color: black;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 10px;
+}
+
+/* 🔥 Card */
+.card {
+  @apply bg-[#1a1a1a] p-6 rounded-xl shadow;
 }

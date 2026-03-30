@@ -129,7 +129,7 @@ export default function EditProfile() {
           onChange={(e) => setAvatar(e.target.files[0])}
         />
 
-        <button className="bg-black text-white px-4 py-2">
+        <button className="btn-gold">
           Save
         </button>
       </form>

@@ -57,8 +57,8 @@ export default function FreelancerProfile() {
         <p>No profile found.</p>
         <button
           onClick={() => navigate("/edit-profile")}
-          className="mt-3 bg-black text-white px-4 py-2"
-        >
+        className="btn-gold">
+        
           Create Profile
         </button>
       </div>
@@ -105,11 +105,11 @@ export default function FreelancerProfile() {
         </div>
 
         <button
-          onClick={() => navigate("/edit-profile")}
-          className="mt-4 bg-black text-white px-4 py-2"
-        >
-          Edit Profile
-        </button>
+  onClick={() => navigate("/edit-profile")}
+  className="btn-gold"
+>
+  Edit Profile
+</button>
       </div>
 
       {/* Proposals */}
